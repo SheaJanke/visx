@@ -1,20 +1,67 @@
-import { sankey as d3Sankey } from 'd3-sankey';
-import { SankeyGraph, SankeyLayout, SankeyLinkMinimal } from 'd3-sankey';
+import {
+  sankey as d3Sankey,
+  sankeyCenter,
+  SankeyExtraProperties,
+  sankeyJustify,
+  sankeyLeft,
+  SankeyLink,
+  SankeyNode,
+  sankeyRight,
+} from 'd3-sankey';
+import { SankeyGraph } from 'd3-sankey';
+
+import { SankeyNodeAlign } from './types';
 
 const CLIP_PADDING = 1;
 
-interface Config<NodeExtraProperties, LinkExtraProperties> {
-    /** The total width of the sankey layout. */
-    width?: number;
-    /** The total width of the sankey layout. */
-    height?: number;
-    /** Set the x-value accessor function for the voronoi layout. */
-    x?: (d: Datum) => number;
-    /** Set the y-value accessor function for the voronoi layout. */
-    y?: (d: Datum) => number;
-  }
+interface Config<N extends SankeyExtraProperties, L extends SankeyExtraProperties> {
+  data: SankeyGraph<N, L>;
+  /** The total width of the sankey layout. */
+  width?: number;
+  /** The total width of the sankey layout. */
+  height?: number;
 
-export function sankey(graph: SankeyLinkMinimal) {
-    const sankeyLayout = d3Sankey();
-    sankeyLayout({nodes: [], links: []}, )
+  nodeAlign?: SankeyNodeAlign;
+
+  nodeWidth?: number;
+
+  nodePadding?: number;
+  /** The node id accessor for the sankey layout. Defaults to index */
+  nodeId?: (node: SankeyNode<N, L>) => string | number;
+
+  nodeSort?: (a: SankeyNode<N, L>, b: SankeyNode<N, L>) => number;
+
+  linkSort?: (a: SankeyLink<N, L>, b: SankeyLink<N, L>) => number;
+}
+
+const NODE_ALIGN_MAP = {
+  left: sankeyLeft,
+  right: sankeyRight,
+  center: sankeyCenter,
+  justify: sankeyJustify,
+};
+
+export function sankey<N extends SankeyExtraProperties, L extends SankeyExtraProperties>({
+  data,
+  width = 0,
+  height = 0,
+  nodeAlign,
+  nodeWidth,
+  nodePadding,
+  nodeId,
+  nodeSort,
+  linkSort,
+}: Config<N, L>): SankeyGraph<N, L> {
+  const sankeyLayout = d3Sankey<SankeyGraph<N, L>, N, L>();
+  sankeyLayout.extent([
+    [-CLIP_PADDING, -CLIP_PADDING],
+    [width + CLIP_PADDING, height + CLIP_PADDING],
+  ]);
+  nodeAlign && sankeyLayout.nodeAlign(NODE_ALIGN_MAP[nodeAlign]);
+  nodeWidth && sankeyLayout.nodeWidth(nodeWidth);
+  nodePadding && sankeyLayout.nodePadding(nodePadding);
+  nodeId && sankeyLayout.nodeId(nodeId);
+  nodeSort && sankeyLayout.nodeSort(nodeSort);
+  linkSort && sankeyLayout.linkSort(linkSort);
+  return sankeyLayout(data);
 }
