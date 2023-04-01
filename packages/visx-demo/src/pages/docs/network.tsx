@@ -7,10 +7,11 @@ import DefaultNode from '../../../../visx-network/src/DefaultNode';
 import DefaultLink from '../../../../visx-network/src/DefaultLink';
 import DocPage from '../../components/DocPage';
 import NetworkTile from '../../components/Gallery/NetworkTile';
+import SankeyTile from '../../components/Gallery/SankeyTile';
 
 const components = [Graph, Nodes, Links, DefaultNode, DefaultLink];
 
-const examples = [NetworkTile];
+const examples = [NetworkTile, SankeyTile];
 
 function NetworkDocs() {
   return (
