@@ -31,7 +31,6 @@ export default function SankeyLink<N extends SankeyNodeInput, L extends SankeyLi
       className={cx('visx-sankey-link', className)}
       ref={innerRef}
       d={linkPath}
-      stroke="blue"
       strokeWidth={link.width}
       fill="none"
       {...restProps}
