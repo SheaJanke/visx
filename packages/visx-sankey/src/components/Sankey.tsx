@@ -11,6 +11,7 @@ import SankeyLink from './SankeyLink';
 import { LinearGradient } from '@visx/gradient';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
+import { Text, TextProps } from '@visx/text';
 import { useSprings, animated } from '@react-spring/web';
 import { TooltipInPortalProps } from '@visx/tooltip/lib/hooks/useTooltipInPortal';
 
@@ -37,7 +38,12 @@ interface Props<N extends SankeyNodeInput, L extends SankeyLinkInput> {
   linkOpacity?: number;
   linkHoverOpacity?: number;
   linkHoverOthersOpacity?: number;
-  nodeColor?: (node: SankeyNodeOutput<N, L>) => string;
+  nodeColor?: (node: SankeyNodeOutput<N, L>) => string | undefined;
+  nodeLabel?: (node: SankeyNodeOutput<N, L>) => string | undefined;
+  nodeLabelProps?: (
+    node: SankeyNodeOutput<N, L>,
+    getNodeColor: (node: SankeyNodeOutput<N, L>) => string,
+  ) => TextProps | undefined;
   nodeOpacity?: number;
   nodeHoverOpacity?: number;
   nodeHoverOthersOpacity?: number;
@@ -57,6 +63,7 @@ const DEFAULT_COLORS = [
   '#5D4037',
   '#455A64',
 ];
+const NODE_LABEL_PADDING = 4;
 
 export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkInput>({
   graph,
@@ -66,6 +73,8 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
   linkHoverOpacity = 0.7,
   linkHoverOthersOpacity = 0.2,
   nodeColor,
+  nodeLabel,
+  nodeLabelProps,
   nodeOpacity = 0.8,
   nodeHoverOpacity = 1,
   nodeHoverOthersOpacity = 0.5,
@@ -93,11 +102,8 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
     return linkHoverOthersOpacity;
   }
 
-  function getNodeColor(node: SankeyNodeOutput<N, L>) {
-    if (nodeColor) {
-      return nodeColor(node);
-    }
-    return DEFAULT_COLORS[node.index % DEFAULT_COLORS.length];
+  function getNodeColor(node: SankeyNodeOutput<N, L>): string {
+    return nodeColor?.(node) || DEFAULT_COLORS[node.index % DEFAULT_COLORS.length];
   }
 
   function getNodeOpacity(node: SankeyNodeOutput<N, L>) {
@@ -182,41 +188,58 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
           );
         })}
         {nodes.map((node, i) => {
+          const label = nodeLabel?.(node);
+          const labelOnLeft = node.x0 > width / 2;
+          const labelProps = nodeLabelProps?.(node, getNodeColor) || {};
           return (
-            <AnimatedSankeyNode
-              key={node.id}
-              node={node}
-              fill={getNodeColor(node)}
-              onMouseEnter={() => {
-                const newHighlightedIds = new Set<string | number>([node.id]);
-                node.sourceLinks.forEach((link) => {
-                  newHighlightedIds.add(getLinkId(link));
-                  newHighlightedIds.add(link.target.id);
-                });
-                node.targetLinks.forEach((link) => {
-                  newHighlightedIds.add(getLinkId(link));
-                  newHighlightedIds.add(link.source.id);
-                });
-                setHighlightedIds(newHighlightedIds);
-              }}
-              onMouseMove={(event) => {
-                const point = localPoint(event);
-                showTooltip({
-                  tooltipData: {
-                    type: 'node',
-                    data: node,
-                    getNodeColor,
-                  },
-                  tooltipLeft: point?.x,
-                  tooltipTop: point?.y,
-                });
-              }}
-              onMouseLeave={() => {
-                setHighlightedIds(new Set());
-                hideTooltip();
-              }}
-              opacity={nodeSprings[i].opacity}
-            />
+            <g key={node.id}>
+              <AnimatedSankeyNode
+                key={node.id}
+                node={node}
+                fill={getNodeColor(node)}
+                onMouseEnter={() => {
+                  const newHighlightedIds = new Set<string | number>([node.id]);
+                  node.sourceLinks.forEach((link) => {
+                    newHighlightedIds.add(getLinkId(link));
+                    newHighlightedIds.add(link.target.id);
+                  });
+                  node.targetLinks.forEach((link) => {
+                    newHighlightedIds.add(getLinkId(link));
+                    newHighlightedIds.add(link.source.id);
+                  });
+                  setHighlightedIds(newHighlightedIds);
+                }}
+                onMouseMove={(event) => {
+                  const point = localPoint(event);
+                  showTooltip({
+                    tooltipData: {
+                      type: 'node',
+                      data: node,
+                      getNodeColor,
+                    },
+                    tooltipLeft: point?.x,
+                    tooltipTop: point?.y,
+                  });
+                }}
+                onMouseLeave={() => {
+                  setHighlightedIds(new Set());
+                  hideTooltip();
+                }}
+                opacity={nodeSprings[i].opacity}
+              />
+              {label && (
+                <Text
+                  fontSize={10}
+                  textAnchor={labelOnLeft ? 'end' : 'start'}
+                  x={labelOnLeft ? node.x0 - NODE_LABEL_PADDING : node.x1 + NODE_LABEL_PADDING}
+                  y={(node.y0 + node.y1) / 2}
+                  verticalAnchor="middle"
+                  {...labelProps}
+                >
+                  {node.id}
+                </Text>
+              )}
+            </g>
           );
         })}
       </svg>

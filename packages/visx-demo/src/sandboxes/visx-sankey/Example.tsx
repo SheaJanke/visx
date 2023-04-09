@@ -41,5 +41,12 @@ export default function Example({ width, height, margin = defaultMargin }: Sanke
     nodeWidth: 10,
   });
 
-  return <Sankey graph={sankeyGraph} width={innerWidth} height={innerHeight} />;
+  return (
+    <Sankey
+      graph={sankeyGraph}
+      width={innerWidth}
+      height={innerHeight}
+      nodeLabel={(node) => node.id}
+    />
+  );
 }
