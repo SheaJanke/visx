@@ -7,7 +7,7 @@ import {
   SankeyOutput,
 } from '../types';
 import SankeyNode from './SankeyNode';
-import SankeyLink from './SankeyLink';
+import SankeyLink, { AllSankeyLinkProps } from './SankeyLink';
 import { LinearGradient } from '@visx/gradient';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
@@ -15,40 +15,48 @@ import { Text, TextProps } from '@visx/text';
 import { useSprings, animated } from '@react-spring/web';
 import { TooltipInPortalProps } from '@visx/tooltip/lib/hooks/useTooltipInPortal';
 
+type GetNodeColor<N extends SankeyNodeInput, L extends SankeyLinkInput> = (
+  node: SankeyNodeOutput<N, L>,
+) => string;
+
 interface TooltipNodeData<N extends SankeyNodeInput, L extends SankeyLinkInput> {
   type: 'node';
   data: SankeyNodeOutput<N, L>;
-  getNodeColor: (node: SankeyNodeOutput<N, L>) => string;
+  getNodeColor: GetNodeColor<N, L>;
 }
 
 interface TooltipLinkData<N extends SankeyNodeInput, L extends SankeyLinkInput> {
   type: 'link';
   data: SankeyLinkOutput<N, L>;
-  getNodeColor: (node: SankeyNodeOutput<N, L>) => string;
+  getNodeColor: GetNodeColor<N, L>;
 }
 
 type TooltipData<N extends SankeyNodeInput, L extends SankeyLinkInput> =
   | TooltipNodeData<N, L>
   | TooltipLinkData<N, L>;
 
-interface Props<N extends SankeyNodeInput, L extends SankeyLinkInput> {
+export interface Props<N extends SankeyNodeInput, L extends SankeyLinkInput> {
   graph: SankeyOutput<N, L>;
   width: number;
   height: number;
   linkOpacity?: number;
   linkHoverOpacity?: number;
   linkHoverOthersOpacity?: number;
+  linkProps?: (
+    link: SankeyLinkOutput<N, L>,
+    getNodeColor: GetNodeColor<N, L>,
+  ) => Omit<AllSankeyLinkProps<N, L>, 'link'>;
   nodeColor?: (node: SankeyNodeOutput<N, L>) => string | undefined;
   nodeLabel?: (node: SankeyNodeOutput<N, L>) => string | undefined;
   nodeLabelProps?: (
     node: SankeyNodeOutput<N, L>,
-    getNodeColor: (node: SankeyNodeOutput<N, L>) => string,
+    getNodeColor: GetNodeColor<N, L>,
   ) => TextProps | undefined;
   nodeOpacity?: number;
   nodeHoverOpacity?: number;
   nodeHoverOthersOpacity?: number;
   tooltipProps?: TooltipInPortalProps;
-  renderTooltip?: (data: TooltipData<N, L>) => ReactNode;
+  renderTooltip?: (data: TooltipData<N, L>, getNodeColor: GetNodeColor<N, L>) => ReactNode;
 }
 
 const DEFAULT_COLORS = [
@@ -72,10 +80,11 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
   linkOpacity = 0.4,
   linkHoverOpacity = 0.7,
   linkHoverOthersOpacity = 0.2,
+  linkProps,
   nodeColor,
   nodeLabel,
   nodeLabelProps,
-  nodeOpacity = 0.8,
+  nodeOpacity = 0.9,
   nodeHoverOpacity = 1,
   nodeHoverOthersOpacity = 0.5,
   tooltipProps = {},
@@ -84,7 +93,10 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
   const [highlightedIds, setHighlightedIds] = useState<Set<string | number>>(new Set());
   const { tooltipData, tooltipOpen, tooltipLeft, tooltipTop, hideTooltip, showTooltip } =
     useTooltip<TooltipData<N, L>>();
-  const { containerRef, TooltipInPortal } = useTooltipInPortal({ detectBounds: true });
+  const { containerRef, TooltipInPortal } = useTooltipInPortal({
+    detectBounds: true,
+    scroll: true,
+  });
   const nodes = graph.nodes;
   const links = graph.links;
 
@@ -142,16 +154,18 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
     }));
   }, [nodes, highlightedIds]);
 
-  const AnimatedSankeyNode = animated(SankeyNode);
-  const AnimatedSankeyLink = animated(SankeyLink);
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
 
   return (
     <div className="visx-sankey" style={{ position: 'relative' }}>
       <svg ref={containerRef} width={width} height={height}>
         {links.map((link, index) => {
           const linkId = getLinkId(link);
+          const { onMouseEnter, onMouseMove, onMouseLeave, ...restLinkProps } = linkProps?.(link, getNodeColor) || {};
           return (
-            <g key={linkId}>
+            <animated.g key={linkId} opacity={linkSprings[index].opacity}>
               <LinearGradient
                 id={linkId}
                 from={getNodeColor(link.source)}
@@ -160,10 +174,11 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
                 x1={link.source.x1}
                 x2={link.target.x0}
               />
-              <AnimatedSankeyLink
+              <SankeyLink
                 link={link}
-                onMouseEnter={() => {
+                onMouseEnter={(event) => {
                   setHighlightedIds(new Set([linkId, link.source.id, link.target.id]));
+                  onMouseEnter && onMouseEnter(event);
                 }}
                 onMouseMove={(event) => {
                   const point = localPoint(event);
@@ -176,15 +191,17 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
                     tooltipLeft: point?.x,
                     tooltipTop: point?.y,
                   });
+                  onMouseMove && onMouseMove(event);
                 }}
-                onMouseLeave={() => {
+                onMouseLeave={(event) => {
                   setHighlightedIds(new Set());
                   hideTooltip();
+                  onMouseLeave && onMouseLeave(event);
                 }}
-                opacity={linkSprings[index].opacity}
                 stroke={`url(#${linkId})`}
+                {...restLinkProps}
               />
-            </g>
+            </animated.g>
           );
         })}
         {nodes.map((node, i) => {
@@ -192,8 +209,8 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
           const labelOnLeft = node.x0 > width / 2;
           const labelProps = nodeLabelProps?.(node, getNodeColor) || {};
           return (
-            <g key={node.id}>
-              <AnimatedSankeyNode
+            <animated.g key={node.id} opacity={nodeSprings[i].opacity}>
+              <SankeyNode
                 key={node.id}
                 node={node}
                 fill={getNodeColor(node)}
@@ -225,7 +242,6 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
                   setHighlightedIds(new Set());
                   hideTooltip();
                 }}
-                opacity={nodeSprings[i].opacity}
               />
               {label && (
                 <Text
@@ -239,11 +255,11 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
                   {node.id}
                 </Text>
               )}
-            </g>
+            </animated.g>
           );
         })}
       </svg>
-      {tooltipOpen && tooltipData && renderTooltip && (
+      {tooltipOpen && tooltipData && renderTooltip?.(tooltipData, getNodeColor) && (
         <TooltipInPortal
           className="visx-sankey-tooltip"
           left={tooltipLeft}
@@ -251,7 +267,7 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
           key={Math.random()}
           {...tooltipProps}
         >
-          {renderTooltip(tooltipData)}
+          {renderTooltip(tooltipData, getNodeColor)}
         </TooltipInPortal>
       )}
     </div>

@@ -1,2 +1,2 @@
 export { sankey } from './sankey';
-export { default as Sankey } from './components/Sankey';
+export { default as Sankey, Props as SankeyProps } from './components/Sankey';
