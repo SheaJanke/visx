@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import {
   SankeyLinkInput,
   SankeyLinkOutput,
@@ -6,14 +6,14 @@ import {
   SankeyNodeOutput,
   SankeyOutput,
 } from '../types';
-import SankeyNode from './SankeyNode';
+import SankeyNode, { AllSankeyNodeProps } from './SankeyNode';
 import SankeyLink, { AllSankeyLinkProps } from './SankeyLink';
 import { LinearGradient } from '@visx/gradient';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import { Text, TextProps } from '@visx/text';
-import { useSprings, animated } from '@react-spring/web';
-import { TooltipInPortalProps } from '@visx/tooltip/lib/hooks/useTooltipInPortal';
+import { useSprings, animated, UseSpringsProps } from '@react-spring/web';
+import { TooltipInPortalProps, UseTooltipPortalOptions } from '@visx/tooltip/lib/hooks/useTooltipInPortal';
 
 type GetNodeColor<N extends SankeyNodeInput, L extends SankeyLinkInput> = (
   node: SankeyNodeOutput<N, L>,
@@ -39,6 +39,7 @@ export interface Props<N extends SankeyNodeInput, L extends SankeyLinkInput> {
   graph: SankeyOutput<N, L>;
   width: number;
   height: number;
+  hideTooltipDebounceMs?: number;
   linkOpacity?: number;
   linkHoverOpacity?: number;
   linkHoverOthersOpacity?: number;
@@ -52,9 +53,15 @@ export interface Props<N extends SankeyNodeInput, L extends SankeyLinkInput> {
     node: SankeyNodeOutput<N, L>,
     getNodeColor: GetNodeColor<N, L>,
   ) => TextProps | undefined;
+  nodeProps?: (
+    node: SankeyNodeOutput<N, L>,
+    getNodeColor: GetNodeColor<N, L>,
+  ) => Omit<AllSankeyNodeProps<N, L>, 'node'>;
   nodeOpacity?: number;
   nodeHoverOpacity?: number;
   nodeHoverOthersOpacity?: number;
+  opacityAnimationConfig?: UseSpringsProps['config'];
+  tooltipOptions?: UseTooltipPortalOptions;
   tooltipProps?: TooltipInPortalProps;
   renderTooltip?: (data: TooltipData<N, L>, getNodeColor: GetNodeColor<N, L>) => ReactNode;
 }
@@ -77,6 +84,7 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
   graph,
   width,
   height,
+  hideTooltipDebounceMs = 400,
   linkOpacity = 0.4,
   linkHoverOpacity = 0.7,
   linkHoverOthersOpacity = 0.2,
@@ -85,20 +93,30 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
   nodeLabel,
   nodeLabelProps,
   nodeOpacity = 0.9,
+  nodeProps,
   nodeHoverOpacity = 1,
   nodeHoverOthersOpacity = 0.5,
+  opacityAnimationConfig = { duration: 500 },
+  tooltipOptions = {
+    detectBounds: true,
+    scroll: true,
+  },
   tooltipProps = {},
   renderTooltip,
 }: Props<N, L>) {
   const [highlightedIds, setHighlightedIds] = useState<Set<string | number>>(new Set());
   const { tooltipData, tooltipOpen, tooltipLeft, tooltipTop, hideTooltip, showTooltip } =
     useTooltip<TooltipData<N, L>>();
-  const { containerRef, TooltipInPortal } = useTooltipInPortal({
-    detectBounds: true,
-    scroll: true,
-  });
+  const { containerRef, TooltipInPortal } = useTooltipInPortal(tooltipOptions);
+  const hideTooltipRef = useRef<NodeJS.Timeout | null>(null);
   const nodes = graph.nodes;
   const links = graph.links;
+
+  function debouncedHideTooltip() {
+    hideTooltipRef.current = setTimeout(() => {
+      hideTooltip();
+    }, hideTooltipDebounceMs);
+  }
 
   function getLinkId(link: SankeyLinkOutput<N, L>) {
     return `${link.source.id}_${link.target.id}`;
@@ -130,16 +148,12 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
 
   const [nodeSprings, nodeSpringsApi] = useSprings(nodes.length, (index) => ({
     opacity: getNodeOpacity(nodes[index]),
-    config: {
-      duration: 500,
-    },
+    config: opacityAnimationConfig
   }));
 
   const [linkSprings, linkSpringsApi] = useSprings(links.length, (index) => ({
     opacity: getLinkOpacity(links[index]),
-    config: {
-      duration: 500,
-    },
+    config: opacityAnimationConfig
   }));
 
   useEffect(() => {
@@ -163,7 +177,8 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
       <svg ref={containerRef} width={width} height={height}>
         {links.map((link, index) => {
           const linkId = getLinkId(link);
-          const { onMouseEnter, onMouseMove, onMouseLeave, ...restLinkProps } = linkProps?.(link, getNodeColor) || {};
+          const { onMouseEnter, onMouseMove, onMouseLeave, ...restLinkProps } =
+            linkProps?.(link, getNodeColor) || {};
           return (
             <animated.g key={linkId} opacity={linkSprings[index].opacity}>
               <LinearGradient
@@ -182,6 +197,10 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
                 }}
                 onMouseMove={(event) => {
                   const point = localPoint(event);
+                  if(hideTooltipRef.current){
+                    clearTimeout(hideTooltipRef.current);
+                    hideTooltipRef.current = null;
+                  }
                   showTooltip({
                     tooltipData: {
                       type: 'link',
@@ -195,7 +214,7 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
                 }}
                 onMouseLeave={(event) => {
                   setHighlightedIds(new Set());
-                  hideTooltip();
+                  debouncedHideTooltip();
                   onMouseLeave && onMouseLeave(event);
                 }}
                 stroke={`url(#${linkId})`}
@@ -208,13 +227,15 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
           const label = nodeLabel?.(node);
           const labelOnLeft = node.x0 > width / 2;
           const labelProps = nodeLabelProps?.(node, getNodeColor) || {};
+          const { onMouseEnter, onMouseMove, onMouseLeave, ...restNodeProps } =
+            nodeProps?.(node, getNodeColor) || {};
           return (
             <animated.g key={node.id} opacity={nodeSprings[i].opacity}>
               <SankeyNode
                 key={node.id}
                 node={node}
                 fill={getNodeColor(node)}
-                onMouseEnter={() => {
+                onMouseEnter={(event) => {
                   const newHighlightedIds = new Set<string | number>([node.id]);
                   node.sourceLinks.forEach((link) => {
                     newHighlightedIds.add(getLinkId(link));
@@ -225,9 +246,14 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
                     newHighlightedIds.add(link.source.id);
                   });
                   setHighlightedIds(newHighlightedIds);
+                  onMouseEnter && onMouseEnter(event);
                 }}
                 onMouseMove={(event) => {
                   const point = localPoint(event);
+                  if(hideTooltipRef.current){
+                    clearTimeout(hideTooltipRef.current);
+                    hideTooltipRef.current = null;
+                  }
                   showTooltip({
                     tooltipData: {
                       type: 'node',
@@ -237,19 +263,23 @@ export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkIn
                     tooltipLeft: point?.x,
                     tooltipTop: point?.y,
                   });
+                  onMouseMove && onMouseMove(event);
                 }}
-                onMouseLeave={() => {
+                onMouseLeave={(event) => {
                   setHighlightedIds(new Set());
-                  hideTooltip();
+                  debouncedHideTooltip();
+                  onMouseLeave && onMouseLeave(event);
                 }}
+                {...restNodeProps}
               />
               {label && (
                 <Text
                   fontSize={10}
+                  pointerEvents='none'
                   textAnchor={labelOnLeft ? 'end' : 'start'}
+                  verticalAnchor="middle"
                   x={labelOnLeft ? node.x0 - NODE_LABEL_PADDING : node.x1 + NODE_LABEL_PADDING}
                   y={(node.y0 + node.y1) / 2}
-                  verticalAnchor="middle"
                   {...labelProps}
                 >
                   {node.id}

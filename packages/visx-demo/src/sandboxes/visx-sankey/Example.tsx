@@ -77,6 +77,7 @@ export default function Example({ width, height, margin = defaultMargin }: Props
         nodeLabel={nodeLabel}
         renderTooltip={renderTooltip}
         linkProps={(link) => ({ strokeWidth: link.width - 1 })}
+        nodeProps={() => ({ rx: 2 })}
       />
     </div>
   );

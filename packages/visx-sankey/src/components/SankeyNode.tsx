@@ -11,6 +11,11 @@ export type SankeyNodeProps<N extends SankeyNodeInput, L extends SankeyLinkInput
   innerRef?: React.Ref<SVGRectElement>;
 };
 
+export type AllSankeyNodeProps<N extends SankeyNodeInput, L extends SankeyLinkInput> = AddSVGProps<
+  SankeyNodeProps<N, L>,
+  SVGRectElement
+>;
+
 export default function SankeyNode<N extends SankeyNodeInput, L extends SankeyLinkInput>({
   node,
   className,
