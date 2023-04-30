@@ -39,7 +39,7 @@
     "build:release": "yarn run ts ./scripts/performRelease/index.ts",
     "dev:demo": "yarn workspace @visx/demo dev",
     "check:sizes": "yarn run ts ./scripts/compareBuildSizes.ts",
-    "clean": "rm -rf ./packages/**/{lib,esm}",
+    "clean": "rm -rf ./packages/**/{lib,esm,node_modules}",
     "format": "lerna exec --parallel -- prettier --write --ignore-path ../../.prettierignore .",
     "jest": "NODE_ENV=test jest --coverage --verbose",
     "lint": "eslint packages/ --quiet",
@@ -50,7 +50,7 @@
     "test": "yarn run jest",
     "test:watch": "yarn run jest --watch",
     "ts": "ts-node --project ./tsconfig.node.json",
-    "type": "lerna exec --parallel -- tsc --build",
+    "type": "rm -rf ./packages/**/tsconfig.tsbuildinfo && lerna exec --parallel -- tsc --build",
     "type:pkg": "lerna exec --scope $PKG -- tsc --build --verbose",
     "type:update-refs": "yarn run ts ./scripts/updateTsReferences.ts"
   },

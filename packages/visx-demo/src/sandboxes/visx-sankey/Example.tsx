@@ -1,5 +1,5 @@
 import React from 'react';
-import { sankey, Sankey, SankeyProps } from '../../../../visx-sankey/src';
+import { sankey, SankeyDiagram, SankeyDiagramProps } from '@visx-sankey';
 import lesMiserables, {
   LesMiserables,
   LesMiserablesLink,
@@ -45,10 +45,10 @@ export default function Example({ width, height, margin = defaultMargin }: Props
     nodeWidth: 10,
   });
 
-  const nodeLabel: SankeyProps<LesMiserablesNode, LesMiserablesLink>['nodeLabel'] = (node) =>
+  const nodeLabel: SankeyDiagramProps<LesMiserablesNode, LesMiserablesLink>['nodeLabel'] = (node) =>
     node.id;
 
-  const renderTooltip: SankeyProps<LesMiserablesNode, LesMiserablesLink>['renderTooltip'] = (
+  const renderTooltip: SankeyDiagramProps<LesMiserablesNode, LesMiserablesLink>['renderTooltip'] = (
     tooltipData,
     getNodeColor,
   ) => {
@@ -70,7 +70,7 @@ export default function Example({ width, height, margin = defaultMargin }: Props
 
   return (
     <div style={{ marginLeft: margin.left, marginTop: margin.top, marginRight: margin.right }}>
-      <Sankey
+      <SankeyDiagram
         graph={sankeyGraph}
         width={innerWidth}
         height={innerHeight}

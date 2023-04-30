@@ -9,7 +9,7 @@ export type SankeyLinkProps<N extends SankeyNodeInput, L extends SankeyLinkInput
   /** className to apply to rect element. */
   className?: string;
   /** reference to rect element. */
-  innerRef?: React.Ref<SVGRectElement>;
+  innerRef?: React.Ref<SVGPathElement>;
 };
 
 export type AllSankeyLinkProps<N extends SankeyNodeInput, L extends SankeyLinkInput> = AddSVGProps<

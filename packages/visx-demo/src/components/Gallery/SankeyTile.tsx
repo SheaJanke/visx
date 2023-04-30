@@ -11,9 +11,9 @@ export default function SankeyTile() {
   return (
     <GalleryTile<Props>
       title="Sankey"
-      description="<Sankey.Sankey />"
+      description="<Sankey.SankeyDiagram />"
       exampleRenderer={Sankey}
-      exampleUrl="/network"
+      exampleUrl="/sankey"
       detailsStyles={detailsStyles}
       tileStyles={tileStyles}
     />

@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@types/d3-sankey": "^0.12.1",
-    "@types/react": "*",
     "@visx/event": "^3.0.1",
     "@visx/gradient": "^3.0.0",
     "@visx/group": "3.0.0",

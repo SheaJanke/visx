@@ -80,7 +80,7 @@ const DEFAULT_COLORS = [
 ];
 const NODE_LABEL_PADDING = 4;
 
-export default function Sankey<N extends SankeyNodeInput, L extends SankeyLinkInput>({
+export default function SankeyDiagram<N extends SankeyNodeInput, L extends SankeyLinkInput>({
   graph,
   width,
   height,

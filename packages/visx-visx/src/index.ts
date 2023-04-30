@@ -20,6 +20,7 @@ import * as Network from '@visx/network';
 import * as Pattern from '@visx/pattern';
 import * as Point from '@visx/point';
 import * as Responsive from '@visx/responsive';
+import * as Sankey from '@visx/sankey';
 import * as Scale from '@visx/scale';
 import * as Shape from '@visx/shape';
 import * as Text from '@visx/text';
@@ -53,6 +54,7 @@ export {
   Pattern,
   Point,
   Responsive,
+  Sankey,
   Scale,
   Shape,
   Text,

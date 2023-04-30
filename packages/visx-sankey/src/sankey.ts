@@ -1,7 +1,6 @@
 import {
   sankey as d3Sankey,
   sankeyCenter,
-  SankeyExtraProperties,
   sankeyJustify,
   sankeyLeft,
   sankeyRight,
@@ -11,14 +10,10 @@ import { SankeyGraph } from 'd3-sankey';
 import {
   SankeyInput,
   SankeyLinkInput,
-  SankeyLinkOutput,
   SankeyNodeAlign,
   SankeyNodeInput,
-  SankeyNodeOutput,
   SankeyOutput,
 } from './types';
-
-const CLIP_PADDING = 1;
 
 interface Config<N extends SankeyNodeInput, L extends SankeyLinkInput> {
   data: SankeyInput<N, L>;
@@ -45,25 +40,25 @@ const NODE_ALIGN_MAP = {
   justify: sankeyJustify,
 };
 
-function validateSankeyGraph<N extends SankeyNodeInput, L extends SankeyLinkInput>(
-  graph: SankeyGraph<N, L>,
-): SankeyOutput<N, L> {
-  return {
-    nodes: graph.nodes.map((node) => ({
-      depth: node.depth || 0,
-      height: node.height || 0,
-      id: node.id,
-      index: node.index || 0,
-      sourceLinks: node.sourceLinks || [],
-      targetLinks: node.targetLinks || [],
-      value: node.value || 0,
-      x0: node.value || 0,
-      x1: node.x1 || 0,
-      y0: node.y0 || 0,
-      y1: node.y1 || 0,
-    })),
-  };
-}
+// function validateSankeyGraph<N extends SankeyNodeInput, L extends SankeyLinkInput>(
+//   graph: SankeyGraph<N, L>,
+// ): SankeyOutput<N, L> {
+//   return {
+//     nodes: graph.nodes.map((node) => ({
+//       depth: node.depth || 0,
+//       height: node.height || 0,
+//       id: node.id,
+//       index: node.index || 0,
+//       sourceLinks: node.sourceLinks || [],
+//       targetLinks: node.targetLinks || [],
+//       value: node.value || 0,
+//       x0: node.value || 0,
+//       x1: node.x1 || 0,
+//       y0: node.y0 || 0,
+//       y1: node.y1 || 0,
+//     })),
+//   };
+// }
 
 export function sankey<N extends SankeyNodeInput, L extends SankeyLinkInput>({
   data,
@@ -83,5 +78,6 @@ export function sankey<N extends SankeyNodeInput, L extends SankeyLinkInput>({
   nodePadding && sankeyLayout.nodePadding(nodePadding);
   nodeSort && sankeyLayout.nodeSort(nodeSort);
   linkSort && sankeyLayout.linkSort(linkSort);
+  // @ts-expect-error 
   return sankeyLayout(data);
 }

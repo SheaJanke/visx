@@ -16,7 +16,22 @@
   ],
   "references": [
     {
+      "path": "../visx-event"
+    },
+    {
+      "path": "../visx-gradient"
+    },
+    {
       "path": "../visx-group"
+    },
+    {
+      "path": "../visx-shape"
+    },
+    {
+      "path": "../visx-text"
+    },
+    {
+      "path": "../visx-tooltip"
     }
   ]
 }
