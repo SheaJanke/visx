@@ -134,19 +134,54 @@ export default function ExampleControls({ children }: ControlsProps) {
   const [curveType, setCurveType] = useState<'linear' | 'cardinal' | 'step'>('linear');
   const glyphOutline = theme.gridStyles.stroke;
   const renderGlyph = useCallback(
-    ({ size, color, onPointerMove, onPointerOut, onPointerUp }: GlyphProps<CityTemperature>) => {
+    ({
+      x,
+      y,
+      size,
+      color,
+      onPointerMove,
+      onPointerOut,
+      onPointerUp,
+    }: GlyphProps<CityTemperature>) => {
       const handlers = { onPointerMove, onPointerOut, onPointerUp };
       if (glyphComponent === 'star') {
-        return <GlyphStar stroke={glyphOutline} fill={color} size={size * 10} {...handlers} />;
+        return (
+          <GlyphStar
+            left={x}
+            top={y}
+            stroke={glyphOutline}
+            fill={color}
+            size={size * 10}
+            {...handlers}
+          />
+        );
       }
       if (glyphComponent === 'circle') {
-        return <GlyphDot stroke={glyphOutline} fill={color} r={size / 2} {...handlers} />;
+        return (
+          <GlyphDot
+            left={x}
+            top={y}
+            stroke={glyphOutline}
+            fill={color}
+            r={size / 2}
+            {...handlers}
+          />
+        );
       }
       if (glyphComponent === 'cross') {
-        return <GlyphCross stroke={glyphOutline} fill={color} size={size * 10} {...handlers} />;
+        return (
+          <GlyphCross
+            left={x}
+            top={y}
+            stroke={glyphOutline}
+            fill={color}
+            size={size * 10}
+            {...handlers}
+          />
+        );
       }
       return (
-        <text dx="-0.75em" dy="0.25em" fontSize={14} {...handlers}>
+        <text x={x} y={y} dx="-0.75em" dy="0.25em" fontSize={14} {...handlers}>
           🍍
         </text>
       );
@@ -665,7 +700,7 @@ export default function ExampleControls({ children }: ControlsProps) {
           </label>
         </div>
         <div>
-          <strong>tooltip gliph</strong>
+          <strong>tooltip glyph</strong>
           <label>
             <input
               type="checkbox"
@@ -673,7 +708,7 @@ export default function ExampleControls({ children }: ControlsProps) {
               disabled={!canSnapTooltipToDatum}
               checked={enableTooltipGlyph}
             />
-            show custom tooltip gliph
+            show custom tooltip glyph
           </label>
           &nbsp;&nbsp;&nbsp;&nbsp;
           <label>
