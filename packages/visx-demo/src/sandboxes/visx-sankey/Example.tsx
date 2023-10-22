@@ -1,11 +1,12 @@
+import { cloneDeep } from 'lodash';
 import React from 'react';
-import { sankey, SankeyDiagram, SankeyDiagramProps } from '@visx-sankey';
 import lesMiserables, {
   LesMiserables,
   LesMiserablesLink,
   LesMiserablesNode,
 } from '@visx/mock-data/src/mocks/lesMiserables';
-import { cloneDeep } from 'lodash';
+// FIXME: This should import from '@visx/sankey'
+import { sankey, SankeyDiagram, SankeyDiagramProps } from '../../../../visx-sankey';
 
 export type Props = {
   width: number;

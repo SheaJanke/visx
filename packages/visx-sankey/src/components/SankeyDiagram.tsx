@@ -13,7 +13,10 @@ import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import { Text, TextProps } from '@visx/text';
 import { useSprings, animated, UseSpringsProps } from '@react-spring/web';
-import { TooltipInPortalProps, UseTooltipPortalOptions } from '@visx/tooltip/lib/hooks/useTooltipInPortal';
+import {
+  TooltipInPortalProps,
+  UseTooltipPortalOptions,
+} from '@visx/tooltip/lib/hooks/useTooltipInPortal';
 
 type GetNodeColor<N extends SankeyNodeInput, L extends SankeyLinkInput> = (
   node: SankeyNodeOutput<N, L>,
@@ -148,12 +151,12 @@ export default function SankeyDiagram<N extends SankeyNodeInput, L extends Sanke
 
   const [nodeSprings, nodeSpringsApi] = useSprings(nodes.length, (index) => ({
     opacity: getNodeOpacity(nodes[index]),
-    config: opacityAnimationConfig
+    config: opacityAnimationConfig,
   }));
 
   const [linkSprings, linkSpringsApi] = useSprings(links.length, (index) => ({
     opacity: getLinkOpacity(links[index]),
-    config: opacityAnimationConfig
+    config: opacityAnimationConfig,
   }));
 
   useEffect(() => {
@@ -193,11 +196,11 @@ export default function SankeyDiagram<N extends SankeyNodeInput, L extends Sanke
                 link={link}
                 onMouseEnter={(event) => {
                   setHighlightedIds(new Set([linkId, link.source.id, link.target.id]));
-                  onMouseEnter && onMouseEnter(event);
+                  onMouseEnter?.(event);
                 }}
                 onMouseMove={(event) => {
                   const point = localPoint(event);
-                  if(hideTooltipRef.current){
+                  if (hideTooltipRef.current) {
                     clearTimeout(hideTooltipRef.current);
                     hideTooltipRef.current = null;
                   }
@@ -210,12 +213,12 @@ export default function SankeyDiagram<N extends SankeyNodeInput, L extends Sanke
                     tooltipLeft: point?.x,
                     tooltipTop: point?.y,
                   });
-                  onMouseMove && onMouseMove(event);
+                  onMouseMove?.(event);
                 }}
                 onMouseLeave={(event) => {
                   setHighlightedIds(new Set());
                   debouncedHideTooltip();
-                  onMouseLeave && onMouseLeave(event);
+                  onMouseLeave?.(event);
                 }}
                 stroke={`url(#${linkId})`}
                 {...restLinkProps}
@@ -246,11 +249,11 @@ export default function SankeyDiagram<N extends SankeyNodeInput, L extends Sanke
                     newHighlightedIds.add(link.source.id);
                   });
                   setHighlightedIds(newHighlightedIds);
-                  onMouseEnter && onMouseEnter(event);
+                  onMouseEnter?.(event);
                 }}
                 onMouseMove={(event) => {
                   const point = localPoint(event);
-                  if(hideTooltipRef.current){
+                  if (hideTooltipRef.current) {
                     clearTimeout(hideTooltipRef.current);
                     hideTooltipRef.current = null;
                   }
@@ -263,19 +266,19 @@ export default function SankeyDiagram<N extends SankeyNodeInput, L extends Sanke
                     tooltipLeft: point?.x,
                     tooltipTop: point?.y,
                   });
-                  onMouseMove && onMouseMove(event);
+                  onMouseMove?.(event);
                 }}
                 onMouseLeave={(event) => {
                   setHighlightedIds(new Set());
                   debouncedHideTooltip();
-                  onMouseLeave && onMouseLeave(event);
+                  onMouseLeave?.(event);
                 }}
                 {...restNodeProps}
               />
               {label && (
                 <Text
                   fontSize={10}
-                  pointerEvents='none'
+                  pointerEvents="none"
                   textAnchor={labelOnLeft ? 'end' : 'start'}
                   verticalAnchor="middle"
                   x={labelOnLeft ? node.x0 - NODE_LABEL_PADDING : node.x1 + NODE_LABEL_PADDING}

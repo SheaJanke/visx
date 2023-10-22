@@ -1,14 +1,16 @@
 {
-  "name": "@visx/demo-example",
-  "description": "Standalone visx demo.",
+  "name": "@visx/demo-sankey",
+  "description": "Standalone visx sankey demo.",
   "main": "index.tsx",
   "private": true,
   "dependencies": {
     "@babel/runtime": "^7.8.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@visx/mock-data": "latest",
     "@visx/responsive": "latest",
     "@visx/sankey": "latest",
+    "lodash": "^4.17.21",
     "react": "^18",
     "react-dom": "^18",
     "react-scripts-ts": "3.1.0",

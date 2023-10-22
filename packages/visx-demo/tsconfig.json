@@ -12,7 +12,6 @@
     ],
     "module": "esnext",
     "moduleResolution": "node",
-    "composite": true,
     "outDir": "lib",
     "resolveJsonModule": true,
     "rootDir": "src",
